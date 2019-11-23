@@ -6,7 +6,6 @@ import (
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"golang.org/x/image/colornames"
-	"sort"
 )
 
 //Индексы полигона
@@ -24,9 +23,6 @@ var cubSize float64 = 30
 var cubStep float64 = 2
 
 func run() {
-	collectionCubs = make(map[int]map[int]*Square)
-	collectionCubsIndexX = make(map[float64]map[float64]*Square)
-
 	var win, err = pixelgl.NewWindow(pixelgl.WindowConfig{
 		Title:  "Japan Crossword!",
 		Bounds: pixel.R(0, 0, screenX, screenY),
@@ -39,30 +35,12 @@ func run() {
 	for !win.Closed() {
 		imd := imdraw.New(window)
 		window.Clear(colornames.Black)
-		imd.Color = colornames.White
-		minX := pointGameTableX + cubStep
-		maxX := minX + cubSize
-		minY := pointGameTableY + cubStep
-		maxY := minY + cubSize
-		for x := 1; x <= 20; x++ {
-			collectionCubs[x] = make(map[int]*Square)
-			for y := 1; y <= 20; y++ {
-				rect := pixel.R(minX, minY, maxX, maxY)
-				square := Square{x: x, y: y, rect: rect}
-				imd.Push(rect.Min, rect.Max)
+		for _, value := range collectionCubsIndexX {
+			for _, currentCub := range value {
+				imd.Color = currentCub.color
+				imd.Push(currentCub.rect.Min, currentCub.rect.Max)
 				imd.Rectangle(0)
-				if collectionCubsIndexX[minX] == nil {
-					collectionCubsIndexX[minX] = make(map[float64]*Square)
-				}
-				collectionCubsIndexX[minX][minY] = &square
-				collectionCubs[x][y] = &square
-				minX = maxX + cubStep
-				maxX = minX + cubSize
 			}
-			minX = pointGameTableX + cubStep
-			maxX = minX + cubSize
-			minY = maxY + cubStep
-			maxY = minY + cubSize
 		}
 		if window.JustPressed(pixelgl.MouseButtonLeft) {
 			fmt.Print("мышь x -")
@@ -83,6 +61,7 @@ func run() {
 }
 
 func main() {
+	createMainPlace(20)
 	pixelgl.Run(run)
 }
 
@@ -92,18 +71,11 @@ func getCubs(x float64, y float64) (cub *Square) {
 			for indexY, currentCub := range value {
 				if indexY < y && indexY+cubSize > y {
 					cub = currentCub
+					cub.color = colornames.Red
 				}
 			}
 		}
 	}
 
-	return
-}
-
-func sortIndex(index map[float64]int) (keys []float64) {
-	for k := range index {
-		keys = append(keys, k)
-	}
-	sort.Float64s(keys)
 	return
 }
