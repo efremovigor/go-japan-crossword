@@ -1,20 +1,32 @@
 package main
 
 import (
+	"fmt"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"golang.org/x/image/colornames"
+	"sort"
 )
+
+//Индексы полигона
+var collectionCubs = make(map[int]map[int]*Square)
+var collectionCubsIndexX = make(map[float64]map[float64]*Square)
 
 var window *pixelgl.Window
 
-var screenX float64 = 1010
-var screenY float64 = 770
-var cubSize = 30
-var cubStep = 2
+var screenX float64 = 1200
+var screenY float64 = 800
+
+var pointGameTableX float64 = 200
+var pointGameTableY float64 = 30
+var cubSize float64 = 30
+var cubStep float64 = 2
 
 func run() {
+	collectionCubs = make(map[int]map[int]*Square)
+	collectionCubsIndexX = make(map[float64]map[float64]*Square)
+
 	var win, err = pixelgl.NewWindow(pixelgl.WindowConfig{
 		Title:  "Japan Crossword!",
 		Bounds: pixel.R(0, 0, screenX, screenY),
@@ -24,30 +36,45 @@ func run() {
 		panic(err)
 	}
 	window = win
-	for !window.Closed() {
+	for !win.Closed() {
 		imd := imdraw.New(window)
-		window.Clear(colornames.White)
-		rect := pixel.R(50.5, 38.5, 959.5, 731.5)
-		imd.Color = colornames.Black
-		imd.Push(rect.Min, rect.Max)
-		imd.Rectangle(0)
+		window.Clear(colornames.Black)
 		imd.Color = colornames.White
-		minX := screenX/100*5 + float64(cubStep)
-		maxX := minX + float64(cubSize)
-		minY := screenY/100*5 + float64(cubStep)
-		maxY := minY + float64(cubSize)
-		for y := 0; y < 20; y++ {
-			for x := 0; x < 20; x++ {
+		minX := pointGameTableX + cubStep
+		maxX := minX + cubSize
+		minY := pointGameTableY + cubStep
+		maxY := minY + cubSize
+		for x := 1; x <= 20; x++ {
+			collectionCubs[x] = make(map[int]*Square)
+			for y := 1; y <= 20; y++ {
 				rect := pixel.R(minX, minY, maxX, maxY)
+				square := Square{x: x, y: y, rect: rect}
 				imd.Push(rect.Min, rect.Max)
 				imd.Rectangle(0)
-				minX = maxX + float64(cubStep)
-				maxX = minX + float64(cubSize)
+				if collectionCubsIndexX[minX] == nil {
+					collectionCubsIndexX[minX] = make(map[float64]*Square)
+				}
+				collectionCubsIndexX[minX][minY] = &square
+				collectionCubs[x][y] = &square
+				minX = maxX + cubStep
+				maxX = minX + cubSize
 			}
-			minX = screenX/100*5 + float64(cubStep)
-			maxX = minX + float64(cubSize)
-			minY = maxY + float64(cubStep)
-			maxY = minY + float64(cubSize)
+			minX = pointGameTableX + cubStep
+			maxX = minX + cubSize
+			minY = maxY + cubStep
+			maxY = minY + cubSize
+		}
+		if window.JustPressed(pixelgl.MouseButtonLeft) {
+			fmt.Print("мышь x -")
+			fmt.Print(win.MousePosition().X)
+			fmt.Print("\n")
+
+			fmt.Print("мышь y -")
+			fmt.Print(win.MousePosition().Y)
+			fmt.Print("\n")
+
+			cub := getCubs(win.MousePosition().X, win.MousePosition().Y)
+			fmt.Println(cub)
 		}
 
 		imd.Draw(window)
@@ -56,6 +83,27 @@ func run() {
 }
 
 func main() {
-	//generate(lengthX, lengthY)
 	pixelgl.Run(run)
+}
+
+func getCubs(x float64, y float64) (cub *Square) {
+	for indexX, value := range collectionCubsIndexX {
+		if indexX < x && indexX+cubSize > x {
+			for indexY, currentCub := range value {
+				if indexY < y && indexY+cubSize > y {
+					cub = currentCub
+				}
+			}
+		}
+	}
+
+	return
+}
+
+func sortIndex(index map[float64]int) (keys []float64) {
+	for k := range index {
+		keys = append(keys, k)
+	}
+	sort.Float64s(keys)
+	return
 }
