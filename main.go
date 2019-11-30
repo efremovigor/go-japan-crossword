@@ -21,6 +21,7 @@ var pointGameTableX float64 = 200
 var pointGameTableY float64 = 30
 var cubSize float64 = 30
 var cubStep float64 = 2
+var countCub = 20
 
 func run() {
 	var win, err = pixelgl.NewWindow(pixelgl.WindowConfig{
@@ -37,7 +38,11 @@ func run() {
 		window.Clear(colornames.Black)
 		for _, value := range collectionCubsIndexX {
 			for _, currentCub := range value {
-				imd.Color = currentCub.color
+				if currentCub.color == colornames.Red {
+					imd.Color = colornames.Red
+				} else {
+					imd.Color = colorMap[currentCub.typeSquare]
+				}
 				imd.Push(currentCub.rect.Min, currentCub.rect.Max)
 				imd.Rectangle(0)
 			}
@@ -61,16 +66,24 @@ func run() {
 }
 
 func main() {
-	createMainPlace(20)
+	pic := getPicMatrix(countCub)
+	createMainPlace(pic)
 	pixelgl.Run(run)
 }
 
 func getCubs(x float64, y float64) (cub *Square) {
-	for indexX, value := range collectionCubsIndexX {
-		if indexX < x && indexX+cubSize > x {
-			for indexY, currentCub := range value {
-				if indexY < y && indexY+cubSize > y {
-					cub = currentCub
+
+	if pointGameTableX+cubStep+float64((cubSize+cubStep)*float64(countCub)+cubSize+cubStep) < x || pointGameTableY+cubStep+float64((cubSize+cubStep)*float64(countCub)+cubSize+cubStep) < y {
+		return
+	}
+
+	for i := 0; i < countCub; i++ {
+		pointMinX := pointGameTableX + cubStep + float64((cubSize+cubStep)*float64(i))
+		if pointMinX < x && pointMinX+cubSize+cubStep > x {
+			for n := 0; n < countCub; n++ {
+				pointMinY := pointGameTableY + cubStep + float64((cubSize+cubStep)*float64(n))
+				if pointMinY < y && pointMinY+cubSize+cubStep > y {
+					cub = collectionCubs[i][n]
 					cub.color = colornames.Red
 				}
 			}

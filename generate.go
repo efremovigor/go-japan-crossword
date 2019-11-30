@@ -19,11 +19,12 @@ var colorMap = map[int]color.RGBA{
 
 //Куб
 type Square struct {
-	state int
-	color color.RGBA
-	rect  pixel.Rect
-	x     int
-	y     int
+	state      int
+	color      color.RGBA
+	rect       pixel.Rect
+	x          int
+	y          int
+	typeSquare int
 }
 
 //назначение кода цвета
@@ -34,28 +35,34 @@ func (s *Square) getColor() color.RGBA {
 var src = rand.NewSource(time.Now().UnixNano())
 var r = rand.New(src)
 
-func createMainPlace(size int) {
-	minX := pointGameTableX + cubStep
-	maxX := minX + cubSize
-	minY := pointGameTableY + cubStep
-	maxY := minY + cubSize
-	for x := 1; x <= size; x++ {
-		collectionCubs[x] = make(map[int]*Square)
-		for y := 1; y <= size; y++ {
+func createMainPlace(picMap map[int]map[int]int) {
+	for indexX, value := range picMap {
+		collectionCubs[indexX] = make(map[int]*Square)
+		for indexY, pixelPic := range value {
+			minX := pointGameTableX + cubStep + float64((cubSize+cubStep)*float64(indexX))
+			maxX := minX + cubSize
+			minY := pointGameTableY + cubStep + float64((cubSize+cubStep)*float64(indexY))
+			maxY := minY + cubSize
+
 			rect := pixel.R(minX, minY, maxX, maxY)
-			square := Square{x: x, y: y, rect: rect}
+			square := Square{x: indexX, y: indexY, rect: rect, typeSquare: pixelPic}
 			square.color = colornames.White
 			if collectionCubsIndexX[minX] == nil {
 				collectionCubsIndexX[minX] = make(map[float64]*Square)
 			}
 			collectionCubsIndexX[minX][minY] = &square
-			collectionCubs[x][y] = &square
-			minX = maxX + cubStep
-			maxX = minX + cubSize
+			collectionCubs[indexX][indexY] = &square
 		}
-		minX = pointGameTableX + cubStep
-		maxX = minX + cubSize
-		minY = maxY + cubStep
-		maxY = minY + cubSize
 	}
+}
+
+func getPicMatrix(size int) (picMap map[int]map[int]int) {
+	picMap = make(map[int]map[int]int)
+	for i := 0; i < size; i++ {
+		picMap[i] = make(map[int]int)
+		for j := 0; j < size; j++ {
+			picMap[i][j] = r.Intn(2)
+		}
+	}
+	return picMap
 }
